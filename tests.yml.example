@@ -1,0 +1,4 @@
+repo_owner: your-github-login
+kittygram_domain: http://localhost:8001/
+taski_domain: http://localhost:8000/
+dockerhub_username: your-dockerhub-login
