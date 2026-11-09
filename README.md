@@ -1,5 +1,50 @@
 # Финальный проект: Kittygram в контейнерах
 
+## Запуск Kittygram
+
+Скопируйте `.env.example` в `.env` и задайте собственные значения:
+
+- `POSTGRES_DB`, `POSTGRES_USER`, `POSTGRES_PASSWORD` — имя базы, пользователь и пароль PostgreSQL;
+- `DB_HOST` и `DB_PORT` — адрес и порт базы внутри Compose (для этого проекта `db` и `5432`);
+- `SECRET_KEY` — секретный ключ Django;
+- `DEBUG` — режим отладки Django, для запуска в контейнерах установите `False`.
+
+Сборка и запуск локальных образов:
+
+```bash
+docker compose up -d --build
+docker compose exec backend python manage.py migrate
+docker compose exec backend python manage.py collectstatic --noinput
+```
+
+Kittygram доступен на http://localhost:8001/, Taski — на http://localhost:8000/.
+Данные базы и загруженные изображения хранятся в отдельных Docker volumes.
+
+## Публикация и обновление
+
+В настройках GitHub Actions добавьте секреты `DOCKER_USERNAME` и
+`DOCKER_PASSWORD` с логином и токеном Docker Hub. После успешных тестов
+push в ветку `main` собирает и публикует три образа Kittygram.
+В `docker-compose.production.yml` замените `your-dockerhub-login` на свой
+логин Docker Hub. После публикации образов запустите или обновите проект:
+
+```bash
+docker compose -f docker-compose.production.yml pull
+docker compose -f docker-compose.production.yml up -d
+docker compose -f docker-compose.production.yml exec backend python manage.py migrate
+docker compose -f docker-compose.production.yml exec backend python manage.py collectstatic --noinput
+```
+
+Для автопроверок скопируйте `tests.yml.example` в `tests.yml` и укажите свои
+логины GitHub и Docker Hub. Локальные проверки приложения требуют отдельно
+запущенного Taski. Проверки Docker Hub требуют опубликованных образов.
+
+Результаты проверки в текущем окружении: синтаксис обоих Compose-файлов проверен,
+13 проверок файлов и конфигурации и один тест Django прошли. Тест фронтенда не
+запущен из-за отсутствия зависимостей в проекте. Запуск контейнеров и публикация
+образов не проверены: доступ к Docker Engine отсутствует. GitHub Actions требует
+настроенных секретов и запуска в собственном репозитории.
+
 Это стартовый репозиторий, а не готовое решение. Настройте Dockerfile бэкенда,
 Nginx, базу данных, volumes, Compose и GitHub Actions по заданию курса.
 

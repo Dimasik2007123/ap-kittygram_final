@@ -1,27 +1,41 @@
-version: '3'
-
-volumes:
-  pg_data:
-  static:
-
 services:
   db:
     image: postgres:13
+    env_file: .env
     volumes:
       - pg_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
   backend:
     build: ./backend/
     env_file: .env
+    depends_on:
+      db:
+        condition: service_healthy
+    volumes:
+      - backend_static:/app/collected_static
+      - media:/app/media
   frontend:
-    env_file: .env
     build: ./frontend/
     command: cp -r /app/build/. /static/
     volumes:
-      - static:/static
+      - frontend_static:/static
   gateway:
     build: ./nginx/
-    env_file: .env
     ports:
       - "127.0.0.1:8001:80"
+    depends_on:
+      - backend
     volumes:
-      - static:/static
+      - frontend_static:/static
+      - backend_static:/backend_static
+      - media:/media
+
+volumes:
+  pg_data:
+  frontend_static:
+  backend_static:
+  media:
